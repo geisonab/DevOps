@@ -1,0 +1,44 @@
+#start
+#Install CLI on the machine
+Install-Module Az -Force -AllowClobber
+
+#<Set variables>
+$tenantId = 'your-tenant-id-9999-9999999999'
+$subscriptionId = 'your-subscription-id-9999-9999999999'
+$password = 'yourclientsecret'
+$SecureStringPwd = ConvertTo-SecureString $password -AsPlainText -Force
+$AppId = 'your-app-id-9999-9999999999'
+$pscredential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $AppId, $SecureStringPwd
+Connect-AzAccount -ServicePrincipal -Credential $pscredential -Tenant $tenantId
+Set-AzContext -Subscription $subscriptionId
+#</Set variables>
+
+# start config
+$rgName = 'your-resource-group-name'
+$vmName = 'your-vm-name'
+# end config
+ 
+ 
+$dataDiskStorageType = 'Standard_LRS'
+$vmSize = 'Standard_B8ms'
+ 
+cls
+Write-Host 'Scaling down VM ' $vm.Name
+Stop-AzVM -ResourceGroupName $rgName -Name $vmName -Force
+$vm = Get-AzVM -Name $vmName -resourceGroupName $rgName
+$vm.HardwareProfile.VmSize = $vmSize
+Update-AzVM -VM $vm -ResourceGroupName $rgName
+ 
+$currentFoundDisk = $null
+foreach ($disk in Get-AzDisk -ResourceGroupName $rgName )
+{
+    if($disk.ManagedBy -eq $vm.Id)
+    {
+        $currentFoundDisk = $disk
+        Write-Host 'found disk ' $disk.Name
+        $diskUpdateConfig = New-AzDiskUpdateConfig –AccountType $dataDiskStorageType
+        Update-AzDisk -DiskUpdate $diskUpdateConfig -ResourceGroupName $rgName -DiskName $disk.Name
+    }
+}
+
+#end
