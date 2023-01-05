@@ -20,7 +20,7 @@ $vmName = 'your-vm-name'
  
  
 $dataDiskStorageType = 'Standard_LRS'
-$vmSize = 'Standard_B8ms'
+$vmSize = 'Standard_B4ms'
  
 cls
 Write-Host 'Scaling down VM ' $vm.Name
